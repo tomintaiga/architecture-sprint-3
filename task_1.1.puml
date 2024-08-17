@@ -6,15 +6,20 @@ title Контекст
 
 Person(user, "Пользователь", "Пользователь системы")
 
+Boundary(smart_home, "Smart Home", "Домен") {
+    Container(heating_control, "Heateheating control", "Контекст", "Управляет температурой дома")
+    Container(temperature_monitoring, "Temperature monitoring", "Контекст", "Получает данные от датчиков температуры")
+}
 
 ContainerDb(db, "Database", "Postgresql 13")
-System(smarthome, "Smart Home", "Позволяет управлять температурой умного дома")
 System_Ext(sensor, "Датчик", "Датчик температуры")
 
 
-Rel(user, smarthome, "Использует", "http/https")
-Rel(smarthome, db, "Чтение/Запись", "tcp:5432")
-Rel(sensor, smarthome, "Запись данных", "http/https")
+Rel(user, heating_control, "Использует", "http/https")
+Rel(heating_control, db, "Чтение/Запись данных", "tcp:5432")
+Rel(sensor, heating_control, "Запись данных температуры", "http/https")
+Rel(heating_control, temperature_monitoring, "Данные температуры")
+Rel(temperature_monitoring, db, "Запись данных", "tcp:5432")
 
 SHOW_LEGEND()
 @enduml
