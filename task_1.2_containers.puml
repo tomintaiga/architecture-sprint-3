@@ -1,0 +1,132 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Уровень контейнеров
+
+Person_Ext(user, "Пользователь системы")
+Person(admin, "Администратор системы")
+
+Container_Ext(temp_sensor, "Устройство управления температурой")
+Container_Ext(light_device, "Устройство управления светом")
+Container_Ext(gate_device, "Устройство управления воротами")
+
+AddRelTag("read", $lineColor="#00e600", $legendText="Запросы записи данных")
+AddRelTag("write", $lineColor="#ff3333", $legendText="Запросы чтения данных")
+AddRelTag("admin", $lineColor="#cccc00", $legendText="Запросы администратора")
+AddRelTag("command", $lineColor="#8b00ff", $legendText="Управление устройствами")
+AddRelTag("log", $lineColor="#ffa500", $legendText="Логи")
+AddRelTag("metric", $lineColor="#30d5c8", $legendText="Метрики")
+
+
+System_Boundary(c1, "Smart Home") {
+
+    Boundary(api, "API и управление") {
+        Container(keycloak, "Keycloak", "java", "Авторизация пользователей")
+        Container(kong, "Kong", "", "API Gateway")
+        ContainerDb(kong_db, "База Kong", "Postgres", "Хранит данные Kong")
+        ContainerDb(keycloak_db, "База Keycloak", "Postgres", "Хранит данные Keycloak")
+        Container(elk, "ELK", "Прием и обработка логов")
+        Container(grafana, "Grafana", "Получение и отображение метрик")
+        Container(jaeger, "Jaeger", "Прием и визуализация трейсов")
+    }
+
+    Boundary(sensor_input, "Ввод данных сенсоров"){
+        Container(c_sensor_input, "Приемник данных", "golang", "Принимает данные от сенсора")
+
+        Container(temp_parser, "Обработчик данных температуры", "gplang", "Разбирает показания различных датчиков температуры")
+        Container(light_parser, "Обработчик данных света", "golang", "Разбирает показания различных датчиков света")
+        Container(gate_parser, "Обработчик данных запорных устройств", "golang", "Разбирает данные датчиков запорных устройств")
+
+        ContainerDb(sensor_db, "БД данных сенсоров", "Кластер Mongodb", "Хранит данные сенсоров")
+        Container(sensor_reader, "Получение данных сенсора", "golang", "Получает данные сенсоров")
+        ContainerDb(sensor_redis, "Кэш сенсоров", "redis", "Кешированные данные сенсоров")
+    }
+
+    Boundary(device_command, "Управление устройствами"){
+        Container(command_interpreter, "Обработчик команд", "golang", "Принимает и выполняет команду по управлению устройствами")
+        ContainerDb(command_db, "БД управляемых устройств", "Postgresql", "Хранит данные управляемых устройств для выполнения комманд")
+
+        Container(temp_command, "Управление температурой", "golang", "Управляет нагревателями\охладителями")
+        Container(light_command, "Управление светом", "golang", "Управляет осветительными приборами")
+        Container(gate_command, "Управление воротами", "gplang", "Управляет воротами и замками")
+    }
+
+    Boundary(user_space, "Пользовательские данные"){
+        Container(user_api, "API", "golang", "API для обработки пользовательских запросов")
+        ContainerDb(user_redis, "Кэш", "Redis")
+        ContainerDb(user_db, "БД пользователя", "postgresql", "Хранит карточку пользователя, данные умного дома и привязку устройств")
+    }
+
+    ContainerQueue(kafka, "Шина данных", "Кластер Kafka", "Обеспечивает асинхронную передачу данных между сервисами")
+}
+
+Rel_D(kong, keycloak, "Авторизует пользователей http/https")
+Rel(user, kong, "Использует сервис https")
+Rel(temp_sensor, kong, "Оправляет данные температуры https", $tags="write")
+Rel(light_device, kong, "Отправляет данные о свете https", $tags="write")
+Rel(gate_device, kong, "Отправляет данные о воротах https", $tags="write")
+
+Rel_R(kong, kong_db, "Чтение/запись данных tcp:5432")
+Rel_D(keycloak, keycloak_db, "Чтение/запись данных tcp:5432")
+
+Rel(kong, elk, "Логи", $tags="log")
+Rel(keycloak, elk, "Логи", $tags="log")
+Rel(sensor_input, elk, "Логи", $tags="log")
+Rel(device_command, elk, "Логи", $tags="log")
+Rel(user_space, elk, "Логи", $tags="log")
+
+Rel(grafana, kong, "Метрики", $tags="metric")
+Rel(grafana, keycloak, "Метрики", $tags="metric")
+Rel(grafana, sensor_input, "Метрики", $tags="metric")
+Rel(grafana, device_command, "Метрики", $tags="metric")
+Rel(grafana, user_space, "Метрики", $tags="metric")
+
+Rel(admin, kong, "Управление", $tags="admin")
+Rel(kong, elk, "Просмотр логов", $tags="admin")
+Rel(kong, grafana, "Просмотр метрик", $tags="admin")
+Rel(kong, jaeger, "Просмотр метрик", $tags="admin")
+
+Rel(kong, c_sensor_input, "Данные о свете", $tags="write")
+Rel(kong, c_sensor_input, "Данные о температуре", $tags="write")
+Rel(kong, c_sensor_input, "Данные о воротах", $tags="write")
+
+Rel(c_sensor_input, kafka, "Данные о свете", $tags="write")
+Rel(c_sensor_input, kafka, "Данные о температуре", $tags="write")
+Rel(c_sensor_input, kafka, "Данные о воротах", $tags="write")
+
+Rel(kafka, temp_parser, "Данные о температуре", $tags="write")
+Rel(kafka, light_parser, "Данные о свете", $tags="write")
+Rel(kafka, gate_parser, "Данные о воротах", $tags="write")
+
+Rel(temp_parser, sensor_db, "Данные о температуре", $tags="write")
+Rel(light_parser, sensor_db, "Данные о свете", $tags="write")
+Rel(gate_parser, sensor_db, "Данные о воротах", $tags="write")
+
+Rel(sensor_reader, sensor_db, "Чтение данных сенсора", $tags="read")
+Rel(sensor_reader, sensor_redis, "Чтение/запись кеша")
+
+Rel(command_interpreter, command_db, "Чтение/запись данных устройств")
+
+Rel(command_interpreter, kafka, "Команды управления температурой", $tags="command")
+Rel(command_interpreter, kafka, "Команды управления светом", $tags="command")
+Rel(command_interpreter, kafka, "Команды управления воротами", $tags="command")
+
+Rel(kafka, temp_command, "Команды управления температурой", $tags="command")
+Rel(kafka, light_command, "Команды управления светом", $tags="command")
+Rel(kafka, gate_command, "Команды управления воротами", $tags="command")
+
+Rel(temp_command, temp_sensor, "Изменение темературы", $tags="command")
+Rel(light_command, light_device, "Изменение режима света", $tags="command")
+Rel(gate_command, gate_device, "Изменение режима замка ворот", $tags="command")
+
+Rel(kong, user_api, "Запросы пользователя", $tags="read")
+Rel(user_api, user_redis, "Запись/чтение кэша")
+Rel(user_api, user_db, "Запросы чтения/записи пользовательских данных")
+Rel(user_api, sensor_reader, "Запросы на чтение данных сенсоров", $tags="read")
+Rel(user_api, command_interpreter, "Выполнение команд на устройствах", $tags="command")
+Rel(user_api, command_interpreter,  "Добавление/изменение данных устройства", $tags="write")
+
+SHOW_LEGEND()
+
+@enduml

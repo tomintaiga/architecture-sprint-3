@@ -1,0 +1,44 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Схема компонет парсера данных сенсора
+
+AddRelTag("read", $lineColor="#00e600", $legendText="Запросы записи данных")
+AddRelTag("write", $lineColor="#ff3333", $legendText="Запросы чтения данных")
+
+Container_Ext(sensor, "Сенсор", "", "Любой из поддерживаемых датчиков")
+Container_Ext(user_api, "API работы с пользователями", "golang")
+
+Component(c_sensor_input, "Приемник данных", "golang", "Принимает данные от сенсора")
+
+Component(temp_parser, "Обработчик данных температуры", "gplang", "Разбирает показания различных сенсора температуры")
+Component(light_parser, "Обработчик данных света", "golang", "Разбирает показания различных сенсора света")
+Component(gate_parser, "Обработчик данных запорных устройств", "golang", "Разбирает данные сенсора запорных устройств")
+
+ComponentDb(sensor_db, "БД данных сенсоров", "Кластер Mongodb", "Хранит данные сенсоров")
+Component(sensor_reader, "Получение данных сенсора", "golang", "Получает данные сенсоров")
+ComponentDb(sensor_redis, "Кэш сенсоров", "Кластер redis", "Кешированные данные сенсоров")
+
+ContainerQueue_Ext(kafka, "Шина данных", "Кластер Kafka", "Обеспечивает асинхронную передачу данных между сервисами")
+
+Rel(sensor, c_sensor_input, "Необработанные данные сенсора", $tags="write")
+Rel_R(c_sensor_input, sensor_redis, "Четние/запись кеша данных")
+Rel(c_sensor_input, kafka, "Необработанные данные сенсора, показания сенсора не в кеше", $tags="write")
+
+Rel(kafka, temp_parser, "Необработанные данные температуры", $tags="write")
+Rel(kafka, light_parser, "Необработанные данные света", $tags="write")
+Rel(kafka, gate_parser, "Необработанные данные запорных устройств", $tags="write")
+
+Rel(temp_parser, sensor_db, "Данные температуры", $tags="write")
+Rel(light_parser, sensor_db, "Данные света", $tags="write")
+Rel(gate_parser, sensor_db, "Данные запорных устройств", $tags="write")
+
+Rel(user_api, sensor_reader, "Запрос данных сенсора", $tags="read")
+Rel_L(sensor_reader, sensor_redis, "Чтение/запись кэша")
+Rel(sensor_reader, sensor_db, "Чтение данных сенсора", $tags="read")
+
+
+
+@enduml
