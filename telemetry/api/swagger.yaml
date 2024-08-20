@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Телеметрия
+  description: Описание синхронного API
+  version: "1.0"
+servers:
+- url: /
+security:
+- bearerAuth: []
+tags:
+- name: telemetry
+  description: Телеметрия
+paths:
+  /telemetry:
+    get:
+      tags:
+      - telemetry
+      summary: Получение даннх телеметрии
+      operationId: telemetryRead
+      parameters:
+      - name: device
+        in: query
+        description: Имя устройства
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: serial
+        in: query
+        description: Серийный номер устройства
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: from
+        in: query
+        description: Начало интервала поиска  формат RFC 3339
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+      - name: to
+        in: query
+        description: Конец интервала поиска  формат RFC 3339
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+      - name: page
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: per_page
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 15
+          default: 10
+      responses:
+        "200":
+          description: Запрос выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Токен доступа отсутсвует или не правильный
+        "403":
+          description: У пользователя нет доступа к операции
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - telemetry
+      summary: Прием телеметрии от подключенных устройств
+      operationId: telemetryWrite
+      requestBody:
+        description: Данные нового типа устройств
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryRecord'
+        required: true
+      responses:
+        "200":
+          description: Запрос выполнен
+        "400":
+          description: Не удалось разобрать запрос
+components:
+  schemas:
+    TelemetryValue:
+      type: object
+      properties:
+        name:
+          type: string
+          example: temp_01
+        value:
+          type: string
+          example: "134"
+    TelemetryRecord:
+      type: object
+      properties:
+        device:
+          type: string
+          example: HD camera
+        serial:
+          type: string
+          example: 12dd3
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryValue'
+    PaginatedResult:
+      type: object
+      properties:
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: true
+        page:
+          type: number
+          example: 3
+        pages:
+          type: number
+          example: 5
+        per_page:
+          type: number
+          example: 20
+        total:
+          type: number
+          example: 100
+        results:
+          type: array
+          items: {}
+    inline_response_200:
+      allOf:
+      - $ref: '#/components/schemas/PaginatedResult'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/components/schemas/TelemetryRecord'
+  responses:
+    Ok200:
+      description: Запрос выполнен
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+  parameters:
+    user:
+      name: Authenticated-User
+      in: header
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        example: admin
+    page:
+      name: page
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: integer
+        example: 1
+    perpage:
+      name: per_page
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: integer
+        example: 15
+        default: 10
+    id:
+      name: id
+      in: path
+      description: Идентификатор объекта
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Телеметрия
+  version: '1.0'
+  description: Описание синхронного API
+tags:
+  - name: telemetry
+    description: Телеметрия
+paths:
+  /telemetry:
+    post:
+      tags:
+        - telemetry
+      summary: Прием телеметрии от подключенных устройств
+      operationId: telemetryWrite
+      requestBody:
+        description: Данные нового типа устройств
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryRecord'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+    get:
+      tags:
+        - telemetry
+      security:
+        - bearerAuth: []
+      summary: Получение даннх телеметрии
+      parameters:
+        - in: query
+          name: serial
+          schema:
+            type: string
+          required: true
+          description: Серийный номер устройства
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perpage'
+      operationId: telemetryRead
+      responses:
+        200:
+          description: Запрос выполнен
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TelemetryRecord'  
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+
+components:
+  responses:
+    Ok200:
+      description: Запрос выполнен
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    user:
+      in: header
+      name: Authenticated-User
+      schema:
+        type: string
+        example: admin
+      required: true
+    page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        example: 1
+    perpage:
+      in: query
+      name: per_page
+      schema:
+        type: integer
+        example: 15
+        default: 10
+    id:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Идентификатор объекта
+  schemas:
+    TelemetryValue:
+      type: object
+      properties:
+        name:
+          type: string
+          example: temp_01
+        value:
+          type: string
+          example: 134
+    TelemetryRecord:
+      type: object
+      properties:
+        device:
+          type: string
+          example: "HD camera"
+        serial:
+          type: string
+          example: 12dd3
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryValue'
+    PaginatedResult:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 3
+        per_page:
+          type: number
+          example: 20
+        total:
+          type: number
+          example: 100
+        results:
+          type: array
+          items: {}
+security:
+  - bearerAuth: []
