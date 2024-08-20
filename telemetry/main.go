@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	CFG_PREFIX                = "TELE"
 	CFG_PORT                  = "PORT"
 	CFG_PORT_DEFAULT          = "8080"
 	CFG_KAFKA_ADDRESS         = "KAFKA"
@@ -39,7 +38,6 @@ func prometheusHandler() gin.HandlerFunc {
 func main() {
 	// Prepare config
 	viper.AutomaticEnv()
-	viper.SetEnvPrefix(CFG_PREFIX)
 	viper.SetDefault(CFG_PORT, CFG_PORT_DEFAULT)
 	viper.SetDefault(CFG_KAFKA_ADDRESS, CFG_KAFKA_ADDRESS_DEFAULT)
 
