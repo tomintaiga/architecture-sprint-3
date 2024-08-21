@@ -30,6 +30,12 @@ public class HeatingSystemController {
 
     private final TemperatureProducer temperatureProducer = new TemperatureProducer();
 
+    @PostMapping
+    public ResponseEntity<Long> addHeatingSystem(@RequestBody HeatingSystemDto heatingSystemDto){
+        logger.info("Creating heating system");
+        return ResponseEntity.ok(heatingSystemService.newHeatingSystem(heatingSystemDto));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<HeatingSystemDto> getHeatingSystem(@PathVariable("id") Long id) {
         logger.info("Fetching heating system with id {}", id);

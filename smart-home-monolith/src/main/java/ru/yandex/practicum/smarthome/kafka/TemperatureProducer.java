@@ -1,7 +1,5 @@
 package ru.yandex.practicum.smarthome.kafka;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 //import util.properties packages
 import java.util.Properties;

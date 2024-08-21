@@ -70,10 +70,10 @@ services:
       - kafka
       - kafka2
       - zookeeper
-  
+
   telemetry:
     build: ./telemetry/
-    ports: 
+    ports:
       - 8010:8080
     environment:
       PORT: 8080
@@ -84,4 +84,31 @@ services:
       kafka:
         condition: service_healthy
 
+  monolith-db:
+    image: postgres:14.7-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./smart-home-monolith/src/main/resources/init.sql:/docker-entrypoint-initdb.d/create_db.sql
+      - monolith-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
 
+  monolith:
+    build: ./smart-home-monolith/
+    environment:
+      TOPIC_NAME: temperature
+      KAFKA: "kafka:29092"
+    ports:
+      - 8020:8080
+    depends_on:
+      monolith-db:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+
+volumes:
+  monolith-db-data:
