@@ -31,7 +31,7 @@ func (r *MemoryRepository) AddDevice(ctx context.Context, device models.Device) 
 
 func (r *MemoryRepository) GetDeviceById(ctx context.Context, id int32) (models.Device, error) {
 	r.mutex.RLock()
-	defer r.mutex.Unlock()
+	defer r.mutex.RUnlock()
 
 	device, ok := r.records[id]
 	if !ok {
