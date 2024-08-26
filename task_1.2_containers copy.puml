@@ -1,0 +1,55 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Уровень контейнеров
+
+
+AddRelTag("read", $lineColor="#00e600", $legendText="Запросы записи данных")
+AddRelTag("write", $lineColor="#ff3333", $legendText="Запросы чтения данных")
+AddRelTag("admin", $lineColor="#cccc00", $legendText="Запросы администратора")
+AddRelTag("command", $lineColor="#8b00ff", $legendText="Управление устройствами")
+AddRelTag("log", $lineColor="#ffa500", $legendText="Логи")
+AddRelTag("metric", $lineColor="#30d5c8", $legendText="Метрики")
+
+System_Ext(ext_device, "Устройства умного дома")
+Person(user, "Пользователь")
+
+System_Boundary(target_system, "Новая система умного дома"){
+    Container(devices, "Управление устройствами", "golang", "Реализует CRUDL устройств, отправку команд на выбранное устройство.")
+    Container(telemetry, "Телеметрия", "golang", "Принимает телеметрию от подключенных устройств.")
+    Container(users, "Пользователи", "golang", "CRUDL пользователей, ролевая политика.")
+    Container(smart_home, "Умный дом", "golang", "Группировка устройств и телеметрии в сущность дома. Связь дома с пользователем. CRUDL помещений и домов.")
+    Container(automation, "Автоматизация", "golang", "Пользовательские сценарии автоматизации. CRUDL сценариев. Прием событий от устройств и выполнение команд.")
+    ContainerQueue(kafka, "Kafka", "java", "Общая шина данных")
+    Container(kong, "Kong", "", "API Gateway")
+}
+
+
+Rel(ext_device, kong, "Подключаются")
+Rel(kong, devices, "Подключаются устройства")
+Rel(devices, ext_device, "Управляет")
+
+Rel(ext_device, kong, "Данные телеметрии")
+Rel(kong, telemetry, "Данные телеметрии")
+
+
+Rel(telemetry, kafka, "Данные телеметрии")
+Rel(kafka, automation, "Данные телеметрии")
+Rel(automation, kafka, "Команды устройствам")
+Rel(kafka, devices, "Команды устройствам")
+Rel(smart_home, devices, "Использует")
+Rel(smart_home, automation, "Использует")
+Rel(smart_home, users, "Использует")
+
+Rel(user, kong, "Посылает http запросы")
+
+Rel(kong, smart_home, "Маршрутизует запросы")
+Rel(kong, automation, "Маршрутизует запросы")
+Rel(kong, users, "Маршрутизует запросы")
+Rel(kong, telemetry, "Маршрутизует запросы")
+Rel(kong, devices, "Маршрутизует запросы")
+
+SHOW_LEGEND()
+
+@enduml

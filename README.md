@@ -1,80 +1,3 @@
-# Базовая настройка
-
-## Запуск minikube
-
-[Инструкция по установке](https://minikube.sigs.k8s.io/docs/start/)
-
-```bash
-minikube start
-```
-
-
-## Добавление токена авторизации GitHub
-
-[Получение токена](https://github.com/settings/tokens/new)
-
-```bash
-kubectl create secret docker-registry ghcr --docker-server=https://ghcr.io --docker-username=<github_username> --docker-password=<github_token> -n default
-```
-
-
-## Установка API GW kusk
-
-[Install Kusk CLI](https://docs.kusk.io/getting-started/install-kusk-cli)
-
-```bash
-kusk cluster install
-```
-
-
-## Настройка terraform
-
-[Установите Terraform](https://yandex.cloud/ru/docs/tutorials/infrastructure-management/terraform-quickstart#install-terraform)
-
-
-Создайте файл ~/.terraformrc
-
-```hcl
-provider_installation {
-  network_mirror {
-    url = "https://terraform-mirror.yandexcloud.net/"
-    include = ["registry.terraform.io/*/*"]
-  }
-  direct {
-    exclude = ["registry.terraform.io/*/*"]
-  }
-}
-```
-
-## Применяем terraform конфигурацию
-
-```bash
-cd terraform
-terraform apply
-```
-
-## Настройка API GW
-
-```bash
-kusk deploy -i api.yaml
-```
-
-## Проверяем работоспособность
-
-```bash
-kubectl port-forward svc/kusk-gateway-envoy-fleet -n kusk-system 8080:80
-curl localhost:8080/hello
-```
-
-
-## Delete minikube
-
-```bash
-minikube delete
-```
-
-----
-
 # Задание 1.1
 
 ## Текущий функционал
@@ -102,18 +25,22 @@ minikube delete
 
 ## Домены
 
-### Smart Home
-
-Контексты:
-- **Heateheating control** - управляет температурой дома, отвечает на запросы пользователей
-- **Temperature monitoring** - получает данные о температуре от датчиков
+1. Управление устройствами. Реализует CRUDL устройств, отправку команд на выбранное устройство.
+2. Телеметрия. Принимает телеметрию от подключенных устройств.
+3. Управление пользователями. CRUDL пользователей, ролевая политика.
+4. Умный дом. Группировка устройств и телеметрии в сущность дома. Связь дома с пользователем. CRUDL помещений и домов.
+5. Автоматизация. Пользовательские сценарии автоматизации. CRUDL сценариев. Прием событий от устройств и выполнение команд.
 
 # Задание 1.2
 
+Идея для приемника телеметрии в том, чтобы разнести задачи приема, обработки, хранение и получения телеметрии.
+После получение данных, они попадают в kafka в соответсвующий топик. Из топика их читает парсер для данного типа данных и приводит к нормализованному виду. После чего, данные записываются в постоянное хранилище.
+
+При поступлении запроса от пользователя, данные читаются из постоянного хранилища.
+
 Схемы:
-- [Схема контейнеров](./task_1.2_containers.puml)
-- [Схема компонент разбораданныех сенсора](./task_1.2_components.puml)
-- [Последовательность обработки данных от датчиков](./task_1.2_seq_sensor_write.puml)
+- [Схема контейнеров](task_1.2_containers%20copy.puml)
+- [Схема компонент разбораданныех сенсора](./task_1.2_containers%20copy.puml)
 
 ## Задание 1.3
 
@@ -122,3 +49,50 @@ minikube delete
 ## Задание 1.4
 
 - [swagger описание сервиса управления устройствами](./task_1.4_command_swagger.yaml)
+
+# Задание 2
+
+## Запуск
+
+Все сервисы поднимаются при помощи `docker compose` следующим образом:
+
+```bash
+sudo docker compose up
+```
+
+При этом, необходимо чтобы в папке был `.env` файл, как пример:
+```
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=smart_home
+```
+
+## Сервисы
+
+|Сервис     | Порт |
+|-----------|------|
+|zookeeper  | 2181 |
+|kafka 1    | 29092|
+|kafka 2    | 29093|
+|kafka-ui   | 8090 |
+|telemetry  | 8010 |
+|devices    | 8030 |
+|monolith-db| 15432|
+|monolith   | 8020 |
+|kong       |8001, 8444, 8000, 8443, 9080, 9081 |
+|prometheus | 9090 |
+|grafana    | 3000 |
+
+## Использование
+
+Запустив систему при помощи команды
+```bash
+sudo docker compose up
+```
+
+У пользователя есть следующие пути:
+- `/api/heating` - маршрутизует запросы на монолит
+- `/telemetry` - маршрутизует запросы на сервис телеметрии
+- `/device` - маршрутизует запросы на сервис управления устройствами
+- `/command` - маршрутизует запросы на сервис управления устройствами для выполнения команд
+

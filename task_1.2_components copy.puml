@@ -1,0 +1,46 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Схема компонет телеметрии
+
+AddRelTag("read", $lineColor="#00e600", $legendText="Запросы записи данных")
+AddRelTag("write", $lineColor="#ff3333", $legendText="Запросы чтения данных")
+
+Component(user_api, "API", "golang", "API для внешних пользователей")
+ComponentDb(redis1, "Redis", "Кэш")
+
+Component_Ext(device, "Устройство")
+Component(telemetry_input, "Прием данных", "Принимает данные телеметрии от устройств")
+Component(parser1, "Парсер данных 1", "go")
+Component(parser2, "Парсер данных 2", "go")
+Component(parser3, "Парсер данных 3", "go")
+
+ComponentDb(db, "СУБД телеметрии", "clickhouse")
+Component(telemetry_control, "Управление телеметрией", "go")
+
+ComponentQueue(kafka, "Kafka", "java")
+
+Person_Ext(user, "Внешний ползователь")
+
+Rel(user_api, redis1, "Чтение/запись кэша")
+
+Rel(device, telemetry_input, "Данные телеметрии", $tags="write")
+Rel(telemetry_input, kafka, "Данные телеметрии", $tags="write")
+Rel(kafka, parser1, "Данные датчика 1", $tags="write")
+Rel(kafka, parser2, "Данные датчика 2", $tags="write")
+Rel(kafka, parser3, "Данные датчика 3", $tags="write")
+Rel(parser1, kafka, "Разобранные данные 1", $tags="write")
+Rel(parser2, kafka, "Разобранные данные 2", $tags="write")
+Rel(parser3, kafka, "Разобранные данные 3", $tags="write")
+
+Rel(kafka, telemetry_control, "Данные телеметрии", $tags="write")
+Rel(telemetry_control, db, "Чтение/запись данные телеметрии")
+
+Rel(user_api, telemetry_control, "Запросы данных телеметрии", $tags="read")
+Rel(user, user_api, "Запрос данных телеметрии", $tags="read")
+
+SHOW_LEGEND()
+
+@enduml
