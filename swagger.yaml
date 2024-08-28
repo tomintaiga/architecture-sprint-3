@@ -1,0 +1,385 @@
+openapi: 3.0.3
+info:
+  title: Задание спринта 3
+  description: |-
+    Это общий swagger файл для задания 3го спринта
+  version: 1.0.0
+servers:
+  - url: http://192.168.68.105:8000
+  - url: http://localhost:8000
+tags:
+  - name: monolith
+    description: API монолитного приложения
+  - name: device
+    description: Утсройства
+  - name: telemetry
+    description: Телеметрия
+paths:
+  /api/heating:
+    post:
+      tags:
+        - monolith
+      summary: Добавление отопительной системы
+      operationId: heatingDeviceNew
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeatingSystem'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingSystem'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+  /api/heating/{id}:
+    get:
+      tags:
+        - monolith
+      summary: Получить информацию об отопительной системе
+      operationId: heatingDeviceRead
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingSystem'
+        500:
+          $ref: '#/components/responses/M_InternalServerError'
+    put:
+      tags:
+        - monolith
+      summary: Обновить информацию об отопительной системе
+      operationId: heatingDeviceUpdate
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingSystem'
+        500:
+          $ref: '#/components/responses/M_InternalServerError'
+  /api/heating/{id}/turn-on:
+    post:
+      tags:
+        - monolith
+      summary: Включить отопительное устройство
+      operationId: heatingDeviceOn
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingSystem'
+  /api/heating/{id}/turn-off:
+    post:
+      tags:
+        - monolith
+      summary: Выключить отопительное устройство
+      operationId: heatingDeviceOff
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingSystem'
+  /api/heating/{id}/set-temperature:
+    post:
+      tags:
+        - monolith
+      summary: Установить температуру
+      operationId: heatingDeviceSetTemp
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - in: query
+          required: true
+          name: temperature
+          schema:
+            type: integer
+            format: double
+      responses:
+        204:
+          $ref: '#/components/responses/NoContent'
+  /api/heating/{id}/current-temperature:
+    get:
+      tags:
+        - monolith
+      summary: Получить температуру
+      operationId: heatingDeviceGetTemp
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: double
+  /device:
+    post:
+      tags:
+        - device
+      summary: Регистрация устройства в системе
+      operationId: deviceNew
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+  /device/{id}:
+    get:
+      tags:
+        - device
+      summary: Получить информацию об устройстве
+      operationId: deviceRead
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+  /command/{id}:
+    post:
+      tags:
+        - device
+      summary: Отправить команду на устройство
+      operationId: deviceCmd
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Command'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+  /telemetry:
+    post:
+      tags:
+        - telemetry
+      summary: Прием телеметрии от подключенных устройств
+      operationId: telemetryWrite
+      requestBody:
+        description: Данные нового типа устройств
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryRecord'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+    get:
+      tags:
+        - telemetry
+      security:
+        - bearerAuth: []
+      summary: Получение даннх телеметрии
+      parameters:
+        - in: query
+          name: serial
+          schema:
+            type: string
+          required: true
+          description: Серийный номер устройства
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perpage'
+      operationId: telemetryRead
+      responses:
+        200:
+          description: Запрос выполнен
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResult'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TelemetryRecord'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+components:
+  responses:
+    Ok200:
+      description: Запрос выполнен
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+    NoContent:
+      description: Успешно
+    M_InternalServerError:
+      description: Внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/M_Error'
+  parameters:
+    id:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Идентификатор объекта
+    user:
+      in: header
+      name: Authenticated-User
+      schema:
+        type: string
+        example: admin
+      required: true
+    page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        example: 1
+    perpage:
+      in: query
+      name: per_page
+      schema:
+        type: integer
+        example: 15
+        default: 10
+  schemas:
+    HeatingSystem:
+      type: object
+      description: Отопительная система
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор
+        on:
+          type: boolean
+          description: Флаг включения устройства
+        targetTemperature:
+          type: integer
+          format: double
+          description: Целевая температура устройства
+        currentTemperature:
+          type: integer
+          format: double
+          description: Текущая температура устройства
+    M_Error:
+      type: object
+      description: Ошибка сервиса
+      properties:
+        timestamp:
+          type: string
+          description: Дата и время ошибки
+        status:
+          type: integer
+          description: Статус ошибки
+        error:
+          type: string
+          description: Описание ошибки
+        path:
+          type: string
+          description: Путь возникновения ошибки
+    Device:
+      type: object
+      description: Устройство
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор
+        serial:
+          type: string
+          description: Серийный номер устройства
+        type:
+          type: string
+          description: Тип устройства
+        status:
+          type: boolean
+          description: Статус устройства - вкл/выкл
+    Command:
+      type: object
+      description: Команда
+      properties:
+        name:
+          type: string
+          description: Имя команды
+        args:
+          type: string
+          description: Аргументы
+    TelemetryValue:
+      type: object
+      properties:
+        name:
+          type: string
+          example: temp_01
+        value:
+          type: string
+          example: 134
+    TelemetryRecord:
+      type: object
+      properties:
+        device:
+          type: string
+          example: "HD camera"
+        serial:
+          type: string
+          example: 12dd3
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryValue'
+    PaginatedResult:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 3
+        per_page:
+          type: number
+          example: 20
+        total:
+          type: number
+          example: 100
+        results:
+          type: array
+          items: {}

@@ -67,6 +67,11 @@ POSTGRES_PASSWORD=your_password
 POSTGRES_DB=smart_home
 ```
 
+## Тесты
+
+Чтобы было удобно сделал [swagger](./swagger.yaml) файл со всеми сервисами. В нем 2 сервера 192 (мой удаленный для тестов)
+и localhost если запускать локально.
+
 ## Сервисы
 
 |Сервис     | Порт |

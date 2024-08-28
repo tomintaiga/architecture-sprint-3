@@ -33,3 +33,11 @@ services:
         paths:
           - /command
         strip_path: false
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
