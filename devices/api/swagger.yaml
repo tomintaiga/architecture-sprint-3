@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: Устройства
+  description: Описание синхронного API
+  version: "1.0"
+servers:
+- url: /
+security:
+- bearerAuth: []
+tags:
+- name: device
+  description: Утсройства
+paths:
+  /device:
+    post:
+      tags:
+      - device
+      summary: Регистрация устройства в системе
+      operationId: deviceNew
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        "200":
+          description: Запрос выполнен
+        "400":
+          description: Не удалось разобрать запрос
+  /device/{id}:
+    get:
+      tags:
+      - device
+      summary: Получить информацию об устройстве
+      operationId: deviceRead
+      parameters:
+      - name: id
+        in: path
+        description: Идентификатор объекта
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        "404":
+          description: Запрошенный объект не найден
+  /command/{id}:
+    post:
+      tags:
+      - device
+      summary: Отправить команду на устройство
+      operationId: deviceCmd
+      parameters:
+      - name: id
+        in: path
+        description: Идентификатор объекта
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Command'
+        required: true
+      responses:
+        "200":
+          description: Запрос выполнен
+        "404":
+          description: Запрошенный объект не найден
+components:
+  schemas:
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор
+        serial:
+          type: string
+          description: Серийный номер устройства
+        type:
+          type: string
+          description: Тип устройства
+        status:
+          type: boolean
+          description: Статус устройства - вкл/выкл
+      description: Устройство
+      example:
+        serial: serial
+        id: 0
+        type: type
+        status: true
+    Command:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Имя команды
+        args:
+          type: string
+          description: Аргументы
+      description: Команда
+  responses:
+    Ok200:
+      description: Запрос выполнен
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+  parameters:
+    id:
+      name: id
+      in: path
+      description: Идентификатор объекта
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

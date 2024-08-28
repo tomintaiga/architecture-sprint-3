@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Управление устройствами
+  description: Описание синхронного API
+  version: "1.0"
+tags:
+  - name: device_type
+    description: Типы устройств
+  - name: device
+    description: Устройства
+paths:
+  /device/type:
+    get:
+      tags:
+        - device_type
+      security:
+        - bearerAuth: []
+      summary: Получить список типов устройств
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perpage'
+        - $ref: '#/components/parameters/user'
+      operationId: deviceTypeList
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResult"
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/DeviceType"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      tags:
+        - device_type
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/user'
+      summary: Добавить новый тип устройства
+      operationId: deviceTypeAdd
+      requestBody:
+        description: Данные нового типа устройств
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceType'
+      responses:
+        201:
+          description: Тип устройства добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceType"
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+  /device/type/{id}:
+    get:
+      tags:
+        - device_type
+      security:
+        - bearerAuth: []
+      summary: Получить тип устройство по его id
+      operationId: deviceTypeGetSingle
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      responses:
+        200:
+          description: Данные устройства получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceType"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    put:
+      tags:
+        - device_type
+      security:
+        - bearerAuth: []
+      summary: Изменить тип устройство по его id
+      operationId: deviceTypeUpdate
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      requestBody:
+        description: Данные типа устройств
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceType'
+      responses:
+        200:
+          description: Тип устройства обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceType"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+
+  /device:
+    get:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perpage'
+        - $ref: '#/components/parameters/user'
+      summary: Получение списка устройств
+      operationId: deviceList
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResult"
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Device"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    post:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/user'
+      summary: Добавление нового устройства
+      operationId: deviceAdd
+      requestBody:
+        description: Создать новое устройство
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Device"
+        required: true
+      responses:
+        201:
+          description: Устройство добавлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+  /device/{id}:
+    get:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      summary: Получить устройство по его id
+      operationId: deviceGetSingle
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      responses:
+        200:
+          description: Данные устройства получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    put:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      summary: Изменить устройство по его id
+      operationId: deviceUpdate
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      requestBody:
+        description: Данные устройств
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        200:
+          description: Устройство обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+    delete:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      summary: Удалить устройство по его id
+      operationId: deviceDelete
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      responses:
+        200:
+          description: Устройство удалено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+  /device/{id}/cmd:
+    post:
+      tags:
+        - device
+      security:
+        - bearerAuth: []
+      summary: Выполнить команды на устройстве
+      operationId: deviceRunCmd
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/user'
+      requestBody:
+        description: Данные команды
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Command'
+      responses:
+        200:
+          description: Команда отправлена на устройство
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+components:
+  responses:
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    user:
+      in: header
+      name: Authenticated-User
+      schema:
+        type: string
+        example: admin
+      required: true
+    page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        example: 1
+    perpage:
+      in: query
+      name: per_page
+      schema:
+        type: integer
+        example: 15
+        default: 10
+    id:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Идентификатор объекта
+  schemas:
+    Command:
+      type: object
+      properties:
+        command:
+          type: string
+          example: turn_on
+    DeviceType:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: "Датчик температуры"
+        avatar:
+          type: string
+          example: "http://example.com/temperature.png"
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        type_id:
+          type: integer
+          format: int64
+          example: 10
+        serial:
+          type: string
+          example: "3c407318"
+        control_url:
+          type: string
+          example: "http://example.com/sensor1/"
+        control_creds:
+          type: string
+          example: "username:password"
+        home_id:
+          type: integer
+          format: int64
+          example: 10
+    PaginatedResult:
+      type: object
+      properties:
+        has_next: { type: boolean, example: true }
+        has_prev: { type: boolean, example: true }
+        page: { type: number, example: 3 }
+        pages: { type: number, example: 5 }
+        per_page: { type: number, example: 20 }
+        total: { type: number, example: 100 }
+        results: { type: array, items: {} }
+
+security:
+  - bearerAuth: []

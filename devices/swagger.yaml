@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Устройства
+  version: '1.0'
+  description: Описание синхронного API
+tags:
+  - name: device
+    description: Утсройства
+paths:
+  /device:
+    post:
+      tags:
+        - device
+      summary: Регистрация устройства в системе
+      operationId: deviceNew
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+  /device/{id}:
+    get:
+      tags:
+        - device
+      summary: Получить информацию об устройстве
+      operationId: deviceRead
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        200:
+          description: Данные устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+  /command/{id}:
+    post:
+      tags:
+        - device
+      summary: Отправить команду на устройство
+      operationId: deviceCmd
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Command'
+      responses:
+        200:
+          $ref: '#/components/responses/Ok200'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+      
+components:
+  responses:
+    Ok200:
+      description: Запрос выполнен
+    UnauthorizedError:
+      description: Токен доступа отсутсвует или не правильный
+    BadRequestError:
+      description: Не удалось разобрать запрос
+    ForbiddenError:
+      description: У пользователя нет доступа к операции
+    NotFoundError:
+      description: Запрошенный объект не найден
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Идентификатор объекта
+  schemas:
+    Device:
+      type: object
+      description: Устройство
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор
+        serial:
+          type: string
+          description: Серийный номер устройства
+        type:
+          type: string
+          description: Тип устройства
+        status:
+          type: boolean
+          description: Статус устройства - вкл/выкл
+    Command:
+      type: object
+      description: Команда
+      properties:
+        name:
+          type: string
+          description: Имя команды
+        args:
+          type: string
+          description: Аргументы
+security:
+  - bearerAuth: []

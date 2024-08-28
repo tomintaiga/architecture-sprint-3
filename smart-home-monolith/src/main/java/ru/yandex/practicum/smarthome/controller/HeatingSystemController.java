@@ -12,7 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import ru.yandex.practicum.smarthome.dto.HeatingSystemDto;
+import ru.yandex.practicum.smarthome.kafka.TemperatureProducer;
 import ru.yandex.practicum.smarthome.service.HeatingSystemService;
 
 @RestController
@@ -23,6 +27,14 @@ public class HeatingSystemController {
     private final HeatingSystemService heatingSystemService;
 
     private static final Logger logger = LoggerFactory.getLogger(HeatingSystemController.class);
+
+    private final TemperatureProducer temperatureProducer = new TemperatureProducer();
+
+    @PostMapping
+    public ResponseEntity<Long> addHeatingSystem(@RequestBody HeatingSystemDto heatingSystemDto){
+        logger.info("Creating heating system");
+        return ResponseEntity.ok(heatingSystemService.newHeatingSystem(heatingSystemDto));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<HeatingSystemDto> getHeatingSystem(@PathVariable("id") Long id) {
@@ -55,6 +67,13 @@ public class HeatingSystemController {
     public ResponseEntity<Void> setTargetTemperature(@PathVariable("id") Long id, @RequestParam double temperature) {
         logger.info("Setting target temperature to {} for heating system with id {}", temperature, id);
         heatingSystemService.setTargetTemperature(id, temperature);
+
+        try {
+            this.temperatureProducer.Send(id, temperature);
+        } catch (JsonProcessingException e) {
+            logger.error("Can't send kafka message", e);
+        }
+
         // TODO: Implement automatic temperature maintenance logic in the service layer
         return ResponseEntity.noContent().build();
     }
